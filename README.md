@@ -3,8 +3,11 @@
 
 >jQuery-Luna is simple mp3 audio player.
 
-- Supports only mp3 files
-- Support several files
+- Supports only mp3 files.
+- Supports several files.
+- Supports play, pause, next, prev actions.
+- Supports volume control.
+- Supports progress bar using jQuery UI
 
 Usage:
 
