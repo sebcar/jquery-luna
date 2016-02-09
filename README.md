@@ -1,7 +1,7 @@
 # jQuery-Luna
-## *html5 audio player*
+### html5 audio player
 
->jQuery-Luna is simple mp3 audio player.
+jQuery-Luna is simple mp3 audio player.
 
 - Supports only mp3 files.
 - Supports several files.
@@ -13,6 +13,6 @@ Usage:
 
 ```javascript
 $("your-selector").luna({
-	songs:["path/to/you/file.mp3"]
+	songs:["path/to/your/file1.mp3", "path/to/your/file2.mp3",...]
 });
 ```
