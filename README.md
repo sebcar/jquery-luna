@@ -9,10 +9,15 @@ jQuery-Luna is a simple mp3 audio player.
 - Supports volume control.
 - Supports progress bar using jQuery UI
 
+ [Demo URL](http://sebastian.uy/jquery-luna/)
+
 Usage:
 
 ```javascript
 $("your-selector").luna({
-	songs:["path/to/your/file1.mp3", "path/to/your/file2.mp3",...]
+	songs:["path/to/your/file1.mp3", "path/to/your/file2.mp3",...],
+	onStatusChange: function(e){
+		console.log(e);
+	}
 });
 ```
