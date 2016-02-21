@@ -15,11 +15,16 @@
 </div>
 */
 (function ( $ ) {
-
+    'use strict';
     $.fn.luna = function(options) {
-        var settings = $.extend({
+        //defaults
+        var settings = {
+            onStatusChange : function(){}
+        },
+        settings = $.extend({
 
         }, options ),
+        //html structure
 		htmlOutput = '<div class="luna-container luna">\
 			<div class="luna-controls">\
 			<button type="button" class="luna-prev"></button>\
@@ -38,10 +43,14 @@
 			</audio>\
 		</div>',
         //declare vars
-		$this = this, $player = {}, $btnPlayPause = {}, $btnNext = {},
+		$this = this, $player = {}, $btnPlay = {}, $btnPause = {}, $btnNext = {},
+        $btnPrev = {},
 		$infoCurrent = {}, $infoTotal = {}, indexPlaying = 0,
-		$progressBar = {}, $vol = {}, $msg = {}, playerStatus = '';
-		$this.append(htmlOutput);
+		$progressBar = {}, $vol = {}, playerStatus = '';
+
+        //append html to container
+        $this.append(htmlOutput);
+
         //assign vars
 		$btnPlay = $('.luna-play');
 		$btnPause = $('.luna-pause');
@@ -51,21 +60,23 @@
 		$infoTotal = $('.luna-time-total');
 		$progressBar = $('.luna-progress-bar');
 		$vol = $('.luna-volume');
-        $msg = $('.luna-status-msg');
 		$player = document.getElementById('luna-audio-tag');
+
+
+
         //play-pause
 		$player.playPause = function(e){
 			if ($player.paused === true){
 				$player.play();
 				$btnPlay.trigger('focus');
                 setEventStatusChange('playing');
-
 			}else if ($player.paused === false){
 				$player.pause();
 				$btnPause.trigger('focus');
                 setEventStatusChange('paused');
 			}
 		}
+
         //next song
 		function nextSong(){
 			if (indexPlaying < settings.songs.length - 1){
@@ -74,23 +85,27 @@
 				indexPlaying = 0;
 			}
 		}
+
         //formating time for bar
 		function formatTime(sec) {
-			min = Math.floor(sec / 60);
+			var min = Math.floor(sec / 60);
 			min = (min >= 10) ? min : "0" + min;
-			sec = Math.floor(sec % 60);
+			var sec = Math.floor(sec % 60);
 			sec = (sec >= 10) ? sec : "0" + sec;
 			return min + ":" + sec;
 		}
+
         //check progress
 		function checkProgress(c,t){
 			var p = parseInt((c * 100) / t);
 			$progressBar.slider( "option", "value", p );
 		}
+
         //set progress
 		function setProgress(t,p){
 			$player.currentTime = parseInt( (p*t) / 100 );
 		}
+
         //play another song
 		$player.anotherSong = function(songPath){
 			$infoTotal.text('0:00');
@@ -99,6 +114,7 @@
 			$player.play();
             setEventStatusChange('changing_song');
 		}
+
         //events
 		$btnPlay.on('click', function() {
 			$player.playPause();
@@ -119,6 +135,7 @@
 			$player.anotherSong(settings.songs[indexPlaying]);
 		} );
 
+        //player's events
 		$player.onended = function(){
 			nextSong();
 			$player.anotherSong(settings.songs[indexPlaying]);
@@ -136,8 +153,8 @@
 
 			}
 		}
-		timeUpdate();
 
+		timeUpdate();
 
 		$player.onloadedmetadata = function(){
 			$infoTotal.text( formatTime( $player.duration ) );
@@ -160,12 +177,12 @@
 		$progressBar.on('mouseup', function(){
 			timeUpdate();
 		}  );
-		$player.$volume = 0.75;
+		$player.volume = 0.75;
 		$vol.slider({
 			animate: 'fast',
 			slide: function(event, ui) {
-				$player.$volume = ui.value / 100;
-                setEventStatusChange('volumen_changing');
+				$player.volume = ui.value / 100;
+                setEventStatusChange('volumen_changed_to_' + $player.volume);
 			},
 			value: 75
 		});
@@ -174,18 +191,21 @@
             setEventStatusChange('ready_to_play');
         }
 
-        //PUBLIC EVENTS
+        $player.onerror = function(e){
+            setEventStatusChange('error_loading');
+        }
+
+        //PUBLIC METHODS
 
         //get status
         $this.getStatus = function(){
             return status;
         }
-        //set public event
+
+        //set status for the onStatusChange's event
         function setEventStatusChange(s){
-            status = s;
-            if (options.onStatusChange !== undefined){
-                options.onStatusChange(status);
-            }
+            playerStatus = s;
+            settings.onStatusChange(playerStatus);
         }
 
         return this;
