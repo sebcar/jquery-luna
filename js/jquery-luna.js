@@ -62,7 +62,7 @@
 		$vol = $('.luna-volume');
 		$player = document.getElementById('luna-audio-tag');
 
-
+        //PLAYER'S FUNCTIONS -----------
 
         //play-pause
 		$player.playPause = function(e){
@@ -75,7 +75,18 @@
 				$btnPause.trigger('focus');
                 setEventStatusChange('paused');
 			}
+		};
+
+        //play another song
+        $player.anotherSong = function(songPath){
+			$infoTotal.text('0:00');
+			$player.src = songPath;
+			$btnPlay.trigger('focus');
+			$player.play();
+            setEventStatusChange('changing_song');
 		}
+
+        //PLUGIN'S FUNCTIONS
 
         //next song
 		function nextSong(){
@@ -106,43 +117,85 @@
 			$player.currentTime = parseInt( (p*t) / 100 );
 		}
 
-        //play another song
-		$player.anotherSong = function(songPath){
-			$infoTotal.text('0:00');
-			$player.src = songPath;
-			$btnPlay.trigger('focus');
-			$player.play();
-            setEventStatusChange('changing_song');
-		}
+        //set status for the onStatusChange's event
+        function setEventStatusChange(s){
+            playerStatus = s;
+            settings.onStatusChange(playerStatus);
+        }
 
-        //events
-		$btnPlay.on('click', function() {
-			$player.playPause();
-		} );
-		$btnPause.on('click', function() {
-			$player.playPause();
-		} );
-		$btnNext.on('click', function(){
-			nextSong();
-			$player.anotherSong(settings.songs[indexPlaying]);
-		});
-		$btnPrev.on('click', function(){
-			if (indexPlaying === 0){
-				indexPlaying = settings.songs.length - 1;
-			}else{
-				indexPlaying--;
-			}
-			$player.anotherSong(settings.songs[indexPlaying]);
-		} );
-
-        //player's events
+        //PLAYER'S EVENTS
 		$player.onended = function(){
 			nextSong();
 			$player.anotherSong(settings.songs[indexPlaying]);
             setEventStatusChange('song_finished');
 		}
 
-		function timeUpdate(){
+        //BUTTON'S EVENTS
+        $btnPlay.on('click', function() {
+            $player.playPause();
+        } );
+
+        $btnPause.on('click', function() {
+            $player.playPause();
+        } );
+
+        $btnNext.on('click', function(){
+            nextSong();
+            $player.anotherSong(settings.songs[indexPlaying]);
+        });
+
+        $btnPrev.on('click', function(){
+            if (indexPlaying === 0){
+                indexPlaying = settings.songs.length - 1;
+            }else{
+                indexPlaying--;
+            }
+            $player.anotherSong(settings.songs[indexPlaying]);
+        } );
+
+
+        $player.oncanplay = function(){
+
+            // UI EVENTS
+            timeUpdate();
+
+            $progressBar.slider({
+    			animate: 'fast',
+    			slide:	function(event, ui){
+    				setProgress($player.duration, ui.value);
+                    setEventStatusChange('changing_progress');
+    			}
+    		});
+    		$progressBar.on('mousedown', function() {
+    			noTimeUpdate();
+    		} );
+    		$progressBar.on('mouseup', function(){
+    			timeUpdate();
+    		}  );
+    		$vol.slider({
+    			animate: 'fast',
+    			slide: function(event, ui) {
+    				$player.volume = ui.value / 100;
+                    setEventStatusChange('volumen_changed_to_' + $player.volume);
+    			},
+    			value: 75
+    		});
+            $player.volume = 0.75;
+
+            setEventStatusChange('ready_to_play');
+        }
+
+        $player.onerror = function(e){
+            setEventStatusChange('error_loading');
+        }
+
+		$player.onloadedmetadata = function(){
+            $infoCurrent.text( formatTime( $player.currentTime ) );
+            $infoTotal.text( formatTime ( $player.duration ) );
+            setEventStatusChange('metadata_loaded');
+		}
+
+        function timeUpdate(){
 			$player.ontimeupdate = function () {
 				$infoCurrent.text( formatTime( $player.currentTime ) );
 				checkProgress($player.currentTime, $player.duration);
@@ -154,59 +207,17 @@
 			}
 		}
 
-		timeUpdate();
-
-		$player.onloadedmetadata = function(){
-			$infoTotal.text( formatTime( $player.duration ) );
-            setEventStatusChange('metadata_loaded');
-		}
-
-		//loading
-		$player.src = settings.songs[0];
-		$infoCurrent.text( formatTime( $player.currentTime ) );
-		$progressBar.slider({
-			animate: 'fast',
-			slide:	function(event, ui){
-				setProgress($player.duration, ui.value);
-                setEventStatusChange('changing_progress');
-			}
-		});
-		$progressBar.on('mousedown', function() {
-			noTimeUpdate();
-		} );
-		$progressBar.on('mouseup', function(){
-			timeUpdate();
-		}  );
-		$player.volume = 0.75;
-		$vol.slider({
-			animate: 'fast',
-			slide: function(event, ui) {
-				$player.volume = ui.value / 100;
-                setEventStatusChange('volumen_changed_to_' + $player.volume);
-			},
-			value: 75
-		});
-
-        $player.oncanplay = function(){
-            setEventStatusChange('ready_to_play');
-        }
-
-        $player.onerror = function(e){
-            setEventStatusChange('error_loading');
-        }
-
         //PUBLIC METHODS
 
         //get status
         $this.getStatus = function(){
-            return status;
+            return playerStatus;
         }
 
-        //set status for the onStatusChange's event
-        function setEventStatusChange(s){
-            playerStatus = s;
-            settings.onStatusChange(playerStatus);
-        }
+
+
+        //loading
+		$player.src = settings.songs[0];
 
         return this;
     };
